@@ -69,13 +69,12 @@ What it does:
 
 1. Runs on `macos-14`
 2. Installs `xcodegen`
-3. Downloads BeeWare's latest iOS Python support package
-4. Generates `iPyRunner.xcodeproj` from `project.yml`
-5. Builds an unsigned iOS archive
-6. Packages `Payload/iPyRunner.app` into `iPyRunner.ipa`
-7. Does **not** run `ldid` or any signing step
-8. Uploads the IPA artifact
-9. Publishes/updates a `latest` prerelease on pushes to `main`
+3. Generates `iPyRunner.xcodeproj` from `project.yml`
+4. Builds an unsigned iOS archive
+5. Packages `Payload/iPyRunner.app` into `iPyRunner.ipa`
+6. Does **not** run `ldid` or any signing step
+7. Uploads the IPA artifact
+8. Publishes/updates a `latest` prerelease on pushes to `main`
 
 You can also run it manually from the repo's **Actions** tab.
 
@@ -99,15 +98,24 @@ iPyRunner/python/
 
 Those generated runtime files are intentionally gitignored because they are large.
 
-## Real embedded Python status
+## Current runtime status: crash-safe Swift shell
 
-The app now has a real conditional embedded-Python bridge:
+The current IPA intentionally does **not** link `Python.xcframework`. This is to avoid instant launch crashes from iOS dynamic loader/framework packaging issues while the app shell is being tested on-device.
 
-- If `Python.xcframework` is present and importable, `EmbeddedPythonRuntime` calls `Py_Initialize()` and `PyRun_SimpleStringFlags`.
-- If the framework is not present, the app still builds in mock mode and shows what would run.
-- Stdout/stderr capture is still marked TODO; print output may appear in the device console until that bridge is completed.
+Current behavior:
 
-The package screen now contacts PyPI, finds a pure-Python wheel, and downloads it into the app's sandbox. Wheel extraction into `site-packages` is the next implementation step. Native packages still require iOS-compatible prebuilt wheels.
+- App launches as a SwiftUI shell.
+- Editor, console, settings, and package screens open.
+- The Run button reports what code would run.
+- The package screen can contact PyPI and download pure-Python wheels into the sandbox.
+
+Next implementation step after confirming the app opens:
+
+1. Pull a device crash log if a Python-linked build crashes.
+2. Re-enable `Python.xcframework` as an embedded framework or static linkage path.
+3. Add stdout/stderr capture and real `PyRun_SimpleStringFlags` execution.
+
+Native packages still require iOS-compatible prebuilt wheels.
 
 ## JIT notes
 

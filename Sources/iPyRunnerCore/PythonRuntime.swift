@@ -1,10 +1,6 @@
 import Foundation
 import Combine
 
-#if canImport(Python)
-import Python
-#endif
-
 public protocol PythonRuntime: AnyObject {
     var state: RuntimeState { get }
     var jitStatus: JITStatus { get }
@@ -33,13 +29,12 @@ public final class EmbeddedPythonRuntime: PythonRuntime, ObservableObject {
         state = .starting
         jitStatus = jitController.detect()
 
-        #if canImport(Python)
+        // IMPORTANT:
+        // The embedded Python dynamic framework is temporarily not linked into the IPA
+        // because missing/incorrect framework embedding causes instant dyld crashes on launch.
+        // Keep the app launch-stable first; the bridge can be re-enabled once the framework
+        // packaging path is verified from a device crash log.
         configurePythonEnvironment()
-        if Py_IsInitialized() == 0 {
-            Py_Initialize()
-        }
-        #endif
-
         state = .ready
     }
 
