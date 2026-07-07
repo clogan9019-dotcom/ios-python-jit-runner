@@ -1,0 +1,12 @@
+.DS_Store
+.swiftpm/
+.build/
+DerivedData/
+*.xcuserdata/
+*.xcuserstate
+.env
+.local_runner/
+__pycache__/
+*.pyc
+.pytest_cache/
+Frameworks/
