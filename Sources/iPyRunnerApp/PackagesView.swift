@@ -1,5 +1,4 @@
 import SwiftUI
-import iPyRunnerCore
 
 struct PackagesView: View {
     let runtime: EmbeddedPythonRuntime

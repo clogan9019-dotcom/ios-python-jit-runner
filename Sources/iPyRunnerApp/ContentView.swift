@@ -1,5 +1,4 @@
 import SwiftUI
-import iPyRunnerCore
 
 struct ContentView: View {
     @ObservedObject var runtime: EmbeddedPythonRuntime

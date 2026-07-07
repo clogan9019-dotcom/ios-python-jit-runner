@@ -47,6 +47,16 @@ PythonRuntime/
   └─ sitecustomize.py    package path setup
 ```
 
+## Install fix: no embedded core framework
+
+The app compiles `Sources/iPyRunnerCore` directly into the main app target instead of embedding a separate `iPyRunnerCore.framework`. This avoids iOS install errors like:
+
+```text
+PackageInspectionFailed: Failed to load Info.plist from ... iPyRunnerCore.framework
+```
+
+That error happens when an embedded framework is malformed or missing its own `Info.plist`. Since the core code does not need to be a separate dynamic framework, the clean fix is to make it part of the app binary.
+
 ## IPA maker workflow
 
 This repo now includes a GitHub Actions IPA builder based on the style of your `controller` / `ios-location-spoofer` workflows:

@@ -1,5 +1,4 @@
 import SwiftUI
-import iPyRunnerCore
 
 @main
 struct iPyRunnerApp: App {

@@ -18,21 +18,12 @@ settings:
     AD_HOC_CODE_SIGNING_ALLOWED: YES
 
 targets:
-  iPyRunnerCore:
-    type: framework
-    platform: iOS
-    sources:
-      - path: Sources/iPyRunnerCore
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.clogan.ipyrunner.core
-        DEFINES_MODULE: YES
-
   iPyRunner:
     type: application
     platform: iOS
     sources:
       - path: Sources/iPyRunnerApp
+      - path: Sources/iPyRunnerCore
     resources:
       - path: PythonRuntime
       - path: iPyRunner/python
@@ -49,6 +40,5 @@ targets:
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
     dependencies:
-      - target: iPyRunnerCore
       - framework: Frameworks/Python.xcframework
         embed: false
