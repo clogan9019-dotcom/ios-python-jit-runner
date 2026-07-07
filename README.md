@@ -69,12 +69,13 @@ What it does:
 
 1. Runs on `macos-14`
 2. Installs `xcodegen`
-3. Generates `iPyRunner.xcodeproj` from `project.yml`
-4. Builds an unsigned iOS archive
-5. Packages `Payload/iPyRunner.app` into `iPyRunner.ipa`
-6. Does **not** run `ldid` or any signing step
-7. Uploads the IPA artifact
-8. Publishes/updates a `latest` prerelease on pushes to `main`
+3. Downloads BeeWare's latest iOS Python support package
+4. Generates `iPyRunner.xcodeproj` from `project.yml`
+5. Builds an unsigned iOS archive
+6. Packages `Payload/iPyRunner.app` into `iPyRunner.ipa`
+7. Does **not** run `ldid` or any signing step
+8. Uploads the IPA artifact
+9. Publishes/updates a `latest` prerelease on pushes to `main`
 
 You can also run it manually from the repo's **Actions** tab.
 
@@ -98,22 +99,17 @@ iPyRunner/python/
 
 Those generated runtime files are intentionally gitignored because they are large.
 
-## Current runtime status: crash-safe Swift shell
+## Current runtime status: embedded Python re-enabled
 
-The current IPA intentionally does **not** link `Python.xcframework`. This is to avoid instant launch crashes from iOS dynamic loader/framework packaging issues while the app shell is being tested on-device.
+The IPA workflow now downloads BeeWare's iOS Python support package, embeds `Python.xcframework`, and includes a Python resource folder. The Swift runtime initializes Python with `Py_Initialize()` and executes code with a wrapper around `exec(...)`.
 
 Current behavior:
 
-- App launches as a SwiftUI shell.
-- Editor, console, settings, and package screens open.
-- The Run button reports what code would run.
+- App launches as SwiftUI.
+- The Run button executes Python when `Python.xcframework` is linked successfully.
+- stdout/stderr are captured back into the console using Python `io.StringIO`.
+- If the framework is not available in a local build, it falls back to a clear mock message.
 - The package screen can contact PyPI and download pure-Python wheels into the sandbox.
-
-Next implementation step after confirming the app opens:
-
-1. Pull a device crash log if a Python-linked build crashes.
-2. Re-enable `Python.xcframework` as an embedded framework or static linkage path.
-3. Add stdout/stderr capture and real `PyRun_SimpleStringFlags` execution.
 
 Native packages still require iOS-compatible prebuilt wheels.
 
