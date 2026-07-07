@@ -39,6 +39,9 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        SWIFT_OBJC_BRIDGING_HEADER: iPyRunner/iPyRunner-Bridging-Header.h
+        FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/Frameworks"
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/Sources/iPyRunnerCore $(SRCROOT)/Frameworks/Python.xcframework/ios-arm64/Python.framework/Headers $(SRCROOT)/Frameworks/Python.xcframework/ios-arm64/include/python3.13 $(SRCROOT)/Frameworks/Python.xcframework/ios-arm64/include/python3.12 $(SRCROOT)/Frameworks/Python.xcframework/ios-arm64/include/python3.11"
     dependencies:
       - framework: Frameworks/Python.xcframework
         embed: true
