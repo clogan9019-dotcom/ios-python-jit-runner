@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     @ObservedObject var runtime: EmbeddedPythonRuntime
@@ -34,17 +35,26 @@ struct ContentView: View {
     }
 
     private var runView: some View {
-        NavigationStack {
+        GeometryReader { geo in
+            let isSmallHeight = geo.size.height < 720
+            let horizontalPadding: CGFloat = geo.size.width < 390 ? 10 : 14
+            let cardRadius: CGFloat = geo.size.width < 390 ? 14 : 18
+            let verticalSpacing: CGFloat = isSmallHeight ? 8 : 12
+
             ZStack {
                 LinearGradient(
-                    colors: [Color(red: 0.05, green: 0.06, blue: 0.09), Color(red: 0.10, green: 0.12, blue: 0.18)],
+                    colors: [Color(red: 0.045, green: 0.052, blue: 0.075), Color(red: 0.09, green: 0.11, blue: 0.16)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
 
-                VStack(spacing: 12) {
-                    statusCard
+                VStack(spacing: verticalSpacing) {
+                    topBar(isSmallHeight: isSmallHeight)
+
+                    if !editorFocused {
+                        statusStrip(isSmallHeight: isSmallHeight, radius: cardRadius)
+                    }
 
                     Picker("Pane", selection: $runPane) {
                         ForEach(RunPane.allCases) { pane in
@@ -52,35 +62,36 @@ struct ContentView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .padding(.horizontal)
+                    .padding(.horizontal, horizontalPadding)
 
-                    if runPane == .editor {
-                        editorCard
-                    } else {
-                        consoleCard
+                    Group {
+                        if runPane == .editor {
+                            editorCard(radius: cardRadius, compact: isSmallHeight || editorFocused)
+                        } else {
+                            consoleCard(radius: cardRadius, compact: isSmallHeight)
+                        }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal, horizontalPadding)
 
-                    bottomActions
+                    if !editorFocused {
+                        bottomActions
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.bottom, 6)
+                    }
                 }
-                .padding(.top, 8)
+                .padding(.top, 6)
             }
-            .navigationTitle("iPyRunner")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        runCode()
-                    } label: {
-                        Label(isRunning ? "Running" : "Run", systemImage: "play.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isRunning)
-                }
-
                 ToolbarItemGroup(placement: .keyboard) {
                     Button("Console") {
                         editorFocused = false
                         runPane = .console
+                    }
+                    Spacer()
+                    Button("Run") {
+                        editorFocused = false
+                        runCode()
                     }
                     Spacer()
                     Button("Done") { editorFocused = false }
@@ -89,112 +100,147 @@ struct ContentView: View {
         }
     }
 
-    private var statusCard: some View {
-        HStack(spacing: 12) {
-            Image(systemName: runtime.state == .running ? "bolt.fill" : "terminal.fill")
-                .foregroundStyle(runtime.state == .running ? .yellow : .green)
-                .font(.title2)
-                .frame(width: 34, height: 34)
-                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Python Runner")
-                    .font(.headline)
+    private func topBar(isSmallHeight: Bool) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text("iPyRunner")
+                    .font(.system(size: isSmallHeight ? 22 : 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("State: \(runtime.state.rawValue) • JIT: \(runtime.jitStatus.enabled ? "on" : "off")")
+                Text("iOS Python runner")
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.65))
+                    .foregroundStyle(.white.opacity(0.55))
             }
 
             Spacer()
+
+            Button {
+                runCode()
+            } label: {
+                HStack(spacing: 6) {
+                    if isRunning {
+                        ProgressView().tint(.white)
+                    } else {
+                        Image(systemName: "play.fill")
+                    }
+                    Text(isRunning ? "Running" : "Run")
+                }
+                .font(.system(size: isSmallHeight ? 15 : 17, weight: .semibold))
+                .padding(.horizontal, isSmallHeight ? 12 : 16)
+                .padding(.vertical, isSmallHeight ? 9 : 11)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(isRunning)
         }
-        .padding(14)
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(.white.opacity(0.08), lineWidth: 1)
-        )
-        .padding(.horizontal)
+        .padding(.horizontal, 14)
+        .padding(.vertical, isSmallHeight ? 6 : 8)
+        .background(.black.opacity(0.18))
     }
 
-    private var editorCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+    private func statusStrip(isSmallHeight: Bool, radius: CGFloat) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: runtime.state == .running ? "bolt.fill" : "terminal.fill")
+                .foregroundStyle(runtime.state == .running ? .yellow : .green)
+
+            Text("State: \(runtime.state.rawValue)")
+                .foregroundStyle(.white.opacity(0.82))
+
+            Spacer(minLength: 4)
+
+            Text("JIT: \(runtime.jitStatus.enabled ? "on" : "off")")
+                .foregroundStyle(.white.opacity(0.58))
+        }
+        .font(.system(size: isSmallHeight ? 12 : 13, weight: .semibold, design: .rounded))
+        .padding(.horizontal, 12)
+        .padding(.vertical, isSmallHeight ? 8 : 10)
+        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .stroke(.white.opacity(0.08), lineWidth: 1)
+        )
+        .padding(.horizontal, 14)
+    }
+
+    private func editorCard(radius: CGFloat, compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
                 Label("main.py", systemImage: "doc.text.fill")
-                    .foregroundStyle(.white.opacity(0.8))
-                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.82))
+                    .font(.system(size: compact ? 12 : 13, weight: .semibold))
+
                 Spacer()
+
+                Button("Example") {
+                    setExample()
+                }
+                .font(.caption)
+
                 Button("Clear") { code = "" }
                     .font(.caption)
             }
-            .padding(.horizontal, 14)
-            .padding(.top, 12)
+            .padding(.horizontal, 12)
+            .padding(.top, compact ? 8 : 12)
 
             TextEditor(text: $code)
-                .font(.system(size: 15, weight: .regular, design: .monospaced))
+                .font(.system(size: compact ? 14 : 15, weight: .regular, design: .monospaced))
                 .foregroundStyle(.white)
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
                 .focused($editorFocused)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 10)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(Color.black.opacity(0.44), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
                 .stroke(.white.opacity(0.10), lineWidth: 1)
         )
-        .padding(.horizontal)
     }
 
-    private var consoleCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+    private func consoleCard(radius: CGFloat, compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
                 Label("Console", systemImage: "chevron.left.forwardslash.chevron.right")
-                    .foregroundStyle(.white.opacity(0.8))
-                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.82))
+                    .font(.system(size: compact ? 12 : 13, weight: .semibold))
+
                 Spacer()
+
                 Button("Copy") { UIPasteboard.general.string = console }
                     .font(.caption)
                 Button("Clear") { console = "" }
                     .font(.caption)
             }
-            .padding(.horizontal, 14)
-            .padding(.top, 12)
+            .padding(.horizontal, 12)
+            .padding(.top, compact ? 8 : 12)
 
             ScrollViewReader { proxy in
                 ScrollView {
                     Text(console.isEmpty ? "Console is empty." : console)
                         .id("console-bottom")
-                        .font(.system(size: 14, weight: .regular, design: .monospaced))
+                        .font(.system(size: compact ? 12 : 13, weight: .regular, design: .monospaced))
                         .foregroundStyle(.green.opacity(0.95))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
-                        .padding(14)
+                        .padding(12)
                 }
                 .onChange(of: console) { _ in
                     withAnimation { proxy.scrollTo("console-bottom", anchor: .bottom) }
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(Color.black.opacity(0.64), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
                 .stroke(.green.opacity(0.18), lineWidth: 1)
         )
-        .padding(.horizontal)
     }
 
     private var bottomActions: some View {
         HStack(spacing: 10) {
             Button {
-                code = """
-                import sys
-                print('Hello from iPyRunner')
-                print('Python version:', sys.version)
-                """
+                setExample()
                 runPane = .editor
             } label: {
                 Label("Example", systemImage: "sparkles")
@@ -203,7 +249,14 @@ struct ContentView: View {
             .buttonStyle(.bordered)
 
             Button {
-                editorFocused = false
+                runPane = .console
+            } label: {
+                Label("Console", systemImage: "terminal")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+
+            Button {
                 runCode()
             } label: {
                 Label("Run", systemImage: "play.fill")
@@ -212,8 +265,15 @@ struct ContentView: View {
             .buttonStyle(.borderedProminent)
             .disabled(isRunning)
         }
-        .padding(.horizontal)
-        .padding(.bottom, 8)
+        .font(.system(size: 13, weight: .semibold))
+    }
+
+    private func setExample() {
+        code = """
+        import sys
+        print('Hello from iPyRunner')
+        print('Python version:', sys.version)
+        """
     }
 
     private func runCode() {
