@@ -11,7 +11,7 @@ public final class SandboxFileSystem {
                 ?? URL(fileURLWithPath: NSTemporaryDirectory())
             self.root = docs.appendingPathComponent("Projects", isDirectory: true)
         }
-        try FileManager.default.createDirectory(at: self.root, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: self.root, withIntermediateDirectories: true, attributes: nil)
     }
 
     public func safeURL(for relativePath: String) throws -> URL {
@@ -28,7 +28,7 @@ public final class SandboxFileSystem {
 
     public func write(_ relativePath: String, content: String) throws {
         let url = try safeURL(for: relativePath)
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
         try content.write(to: url, atomically: true, encoding: .utf8)
     }
 

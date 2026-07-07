@@ -47,6 +47,58 @@ PythonRuntime/
   └─ sitecustomize.py    package path setup
 ```
 
+## IPA maker workflow
+
+This repo now includes a GitHub Actions IPA builder based on the style of your `controller` / `ios-location-spoofer` workflows:
+
+```text
+.github/workflows/build-ipa.yml
+```
+
+What it does:
+
+1. Runs on `macos-14`
+2. Installs `xcodegen` and `ldid`
+3. Downloads BeeWare's latest iOS Python support package
+4. Generates `iPyRunner.xcodeproj` from `project.yml`
+5. Builds an unsigned iOS archive
+6. Packages `Payload/iPyRunner.app` into `iPyRunner.ipa`
+7. Signs the main binary with `ldid`
+8. Uploads the IPA artifact
+9. Publishes/updates a `latest` prerelease on pushes to `main`
+
+You can also run it manually from the repo's **Actions** tab.
+
+## Local Xcode project generation
+
+Install XcodeGen and fetch the Python iOS runtime:
+
+```bash
+brew install xcodegen
+Scripts/fetch_python_ios_runtime.sh
+xcodegen generate
+open iPyRunner.xcodeproj
+```
+
+The Python runtime fetch script downloads the latest iOS support archive from BeeWare `Python-Apple-support` and places:
+
+```text
+Frameworks/Python.xcframework
+iPyRunner/python/
+```
+
+Those generated runtime files are intentionally gitignored because they are large.
+
+## Real embedded Python status
+
+The app now has a real conditional embedded-Python bridge:
+
+- If `Python.xcframework` is present and importable, `EmbeddedPythonRuntime` calls `Py_Initialize()` and `PyRun_SimpleStringFlags`.
+- If the framework is not present, the app still builds in mock mode and shows what would run.
+- Stdout/stderr capture is still marked TODO; print output may appear in the device console until that bridge is completed.
+
+The package screen now contacts PyPI, finds a pure-Python wheel, and downloads it into the app's sandbox. Wheel extraction into `site-packages` is the next implementation step. Native packages still require iOS-compatible prebuilt wheels.
+
 ## JIT notes
 
 JIT on iOS is restricted. In practice, JIT may only be available in specific circumstances such as development/debug builds or special entitlements/profiles. The `JITController` included here is designed to:
