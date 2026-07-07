@@ -58,12 +58,12 @@ This repo now includes a GitHub Actions IPA builder based on the style of your `
 What it does:
 
 1. Runs on `macos-14`
-2. Installs `xcodegen` and `ldid`
+2. Installs `xcodegen`
 3. Downloads BeeWare's latest iOS Python support package
 4. Generates `iPyRunner.xcodeproj` from `project.yml`
 5. Builds an unsigned iOS archive
 6. Packages `Payload/iPyRunner.app` into `iPyRunner.ipa`
-7. Signs the main binary with `ldid`
+7. Does **not** run `ldid` or any signing step
 8. Uploads the IPA artifact
 9. Publishes/updates a `latest` prerelease on pushes to `main`
 

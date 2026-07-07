@@ -36,7 +36,7 @@ jobs:
 
       - name: Install build tools
         run: |
-          brew install xcodegen ldid
+          brew install xcodegen
 
       - name: Fetch Python iOS runtime
         run: Scripts/fetch_python_ios_runtime.sh
@@ -57,7 +57,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM=""
 
-      - name: Export and sign IPA with ldid
+      - name: Export unsigned IPA
         run: |
           mkdir -p "$RUNNER_TEMP/ipa/Payload"
           APP_PATH=$(find "$RUNNER_TEMP/iPyRunner.xcarchive" -name "*.app" | head -1)
@@ -70,9 +70,7 @@ jobs:
           echo "Found app: $APP_PATH"
           cp -r "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/"
 
-          BINARY="$RUNNER_TEMP/ipa/Payload/iPyRunner.app/iPyRunner"
-          echo "Signing binary with ldid: $BINARY"
-          ldid -SiPyRunner/iPyRunner.entitlements "$BINARY"
+          echo "Leaving app unsigned/ad-hoc-code-signing-free. No ldid signing is performed."
 
           cd "$RUNNER_TEMP/ipa"
           zip -r "$RUNNER_TEMP/iPyRunner.ipa" Payload
@@ -98,7 +96,7 @@ jobs:
 
             Built: ${{ env.BUILD_TIME }}
 
-            Unsigned/ad-hoc IPA. Sideload with your preferred non-App-Store workflow.
+            Unsigned IPA. Sideload with your preferred non-App-Store workflow.
 
       - name: Publish IPA — Versioned Release tag push
         if: startsWith(github.ref, 'refs/tags/v')
@@ -109,6 +107,6 @@ jobs:
           body: |
             ## iPyRunner ${{ github.ref_name }}
 
-            Unsigned/ad-hoc IPA. Sideload with your preferred non-App-Store workflow.
+            Unsigned IPA. Sideload with your preferred non-App-Store workflow.
           draft: false
           prerelease: false
